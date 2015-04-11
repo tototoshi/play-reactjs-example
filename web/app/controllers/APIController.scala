@@ -18,15 +18,6 @@ object APIController extends Controller with AuthConfigImpl with AuthElement wit
 
   val twitterConfig = new TwitterConfig
 
-  def inTwitterAccount(id: Long)(f: Twitter => Result): Result = {
-    twitterAccountRepository.find(id).map { account =>
-      val tw = getTwitter4jInstance(twitterConfig, account)
-      f(tw)
-    } getOrElse {
-      NotFound
-    }
-  }
-
   def timeline(sinceId: Option[Long]) = StackAction(AuthorityKey -> Normal) { implicit request =>
     val account = loggedIn
     val tw = getTwitter4jInstance(twitterConfig, account)
