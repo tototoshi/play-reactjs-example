@@ -1,0 +1,11 @@
+body {
+    padding-top: 50px;
+}
+img.media {
+    max-width: 100%;
+}
+.notify {
+    position: fixed;
+    bottom: 10px;
+    right: 30px;
+}
