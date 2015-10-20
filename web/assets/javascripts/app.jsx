@@ -1,3 +1,11 @@
+require('../../../node_modules/bootstrap/dist/css/bootstrap.min.css');
+require('bootstrap');
+require('../stylesheets/app.css');
+
+var React = require('react');
+var ReactDOM = require('react-dom');
+var ReactCSSTransitionGroup = require('react-addons-css-transition-group');
+
 var App = React.createClass({
     getInitialState: function() {
         return {
@@ -13,6 +21,7 @@ var App = React.createClass({
             success: function (result) {
                 this.setState({ statuses: result});
 
+                console.log(result);
                 // auto reload
                 var updateInterval = 120 * 1000;
                 setTimeout(function () {
@@ -255,4 +264,4 @@ var Status = React.createClass({
     }
 });
 
-React.render(<App />, document.getElementById("application"));
+ReactDOM.render(<App />, document.getElementById("application"));
