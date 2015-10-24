@@ -13,7 +13,7 @@ module.exports = {
         loaders: [
             { test: /\.css$/, loader: ExtractTextPlugin.extract("style-loader", "css-loader") },
             { test: /\.(ttf|eot|svg|woff2?)(\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: "url-loader" },
-            { test: /\.jsx$/, loader: 'jsx-loader'}
+            { test: /\.jsx?$/, exclude: /(node_modules|bower_components)/, loader: 'babel' }
         ]
     },
     resolve: {
