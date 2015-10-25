@@ -1,7 +1,7 @@
 package controllers
 
 import jp.t2v.lab.play2.auth._
-import models.{ Role, TwitterAccount$ }
+import models.{ Role, TwitterAccount }
 import play.api.mvc.Results._
 import play.api.mvc.{ RequestHeader, Result }
 
