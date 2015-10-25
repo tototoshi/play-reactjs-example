@@ -14,8 +14,6 @@ import scala.collection.JavaConverters._
 
 object APIController extends Controller with AuthConfigImpl with AuthElement with Twitter4jHelper {
 
-  val twitterAccountRepository = new TwitterAccountRepository
-
   val twitterConfig = new TwitterConfig
 
   def timeline(sinceId: Option[Long]) = StackAction(AuthorityKey -> Normal) { implicit request =>

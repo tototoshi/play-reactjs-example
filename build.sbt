@@ -1,6 +1,3 @@
-import scala.slick.codegen.SourceCodeGenerator
-import scala.slick.{ model => m }
-
 name := "play-reactjs-example"
 
 version := "0.1.0-SNAPSHOT"
@@ -28,41 +25,19 @@ lazy val web = (project in file("web"))
   .enablePlugins(PlayScala)
   .settings(slickCodegenSettings:_*)
   .settings(scalariformSettings:_*)
+  .settings(scalikejdbcSettings:_*)
   .settings(
     name := "web",
     scalaVersion := "2.11.6",
     libraryDependencies ++= Seq(
       jdbc,
       ws,
-      "com.typesafe.play" %% "play-slick" % "0.8.1",
-      "com.typesafe.slick" %% "slick" % "2.1.0",
-      "com.github.tototoshi" %% "slick-joda-mapper" % "1.2.0",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
       "jp.t2v" %% "play2-auth"      % "0.13.2",
       "jp.t2v" %% "play2-auth-test" % "0.13.2" % "test",
-      "org.twitter4j" % "twitter4j-core" % "4.0.3"
-    ),
-    slickCodegenDatabaseUrl := databaseUrl,
-    slickCodegenDatabaseUser := databaseUser,
-    slickCodegenDatabasePassword := databasePassword,
-    slickCodegenDriver := scala.slick.driver.PostgresDriver,
-    slickCodegenJdbcDriver := "org.postgresql.Driver",
-    slickCodegenOutputPackage := "models.tables",
-    slickCodegenExcludedTables := Seq("schema_version"),
-    slickCodegenCodeGenerator := { (model:  m.Model) =>
-      new SourceCodeGenerator(model) {
-        override def code =
-          "import com.github.tototoshi.slick.PostgresJodaSupport._\n" + "import org.joda.time.DateTime\n" + super.code
-        override def Table = new Table(_) {
-          override def Column = new Column(_) {
-            override def rawType = model.tpe match {
-              case "java.sql.Timestamp" => "DateTime" // kill j.s.Timestamp
-              case _ =>
-                super.rawType
-            }
-          }
-        }
-      }
-    },
-    sourceGenerators in Compile <+= slickCodegen
+      "org.twitter4j" % "twitter4j-core" % "4.0.3",
+      "org.scalikejdbc" %% "scalikejdbc" % "2.2.9",
+      "org.scalikejdbc" %% "scalikejdbc-config" % "2.2.9",
+      "org.scalikejdbc" %% "scalikejdbc-play-plugin" % "2.3.6"
+    )
 )

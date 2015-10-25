@@ -20,8 +20,6 @@ object ApplicationController extends Controller
 
   val twitterConfig = new TwitterConfig
 
-  val twitterAccountRepository = new TwitterAccountRepository
-
   def index = StackAction(AuthorityKey -> Normal) { implicit request =>
     Ok(views.html.index())
   }
@@ -61,7 +59,7 @@ object ApplicationController extends Controller
           ).right.toOption
         } yield {
           val tw = getTwitter4jInstance(twitterConfig, token.token, token.secret)
-          twitterAccountRepository.save(
+          TwitterAccount.upsert(
             tw.getId, tw.getScreenName, token.token, token.secret
           )
           gotoLoginSucceeded(tw.getId)

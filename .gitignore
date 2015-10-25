@@ -16,3 +16,4 @@ dist
 cache/
 node_modules/
 web/public/
+project/scalikejdbc.properties

@@ -31,3 +31,7 @@ addSbtPlugin("org.flywaydb" % "flyway-sbt" % "3.2.1")
 libraryDependencies += "org.postgresql" % "postgresql" % "9.4-1201-jdbc41"
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-scalariform" % "1.3.0")
+
+addSbtPlugin("org.scalikejdbc" %% "scalikejdbc-mapper-generator" % "2.2.9")
+
+libraryDependencies += "org.postgresql" % "postgresql" % "9.4-1201-jdbc41"

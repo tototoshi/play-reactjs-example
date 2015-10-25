@@ -1,7 +1,7 @@
 package controllers
 
 import jp.t2v.lab.play2.auth._
-import models.{ Role, TwitterAccountRepository }
+import models.{ Role, TwitterAccount$ }
 import play.api.mvc.Results._
 import play.api.mvc.{ RequestHeader, Result }
 
@@ -9,8 +9,6 @@ import scala.concurrent.{ ExecutionContext, Future }
 import scala.reflect.{ ClassTag, classTag }
 
 trait AuthConfigImpl extends AuthConfig {
-
-  val twitterAccountRepository: TwitterAccountRepository
 
   type Id = Long
 
@@ -22,7 +20,7 @@ trait AuthConfigImpl extends AuthConfig {
 
   val sessionTimeoutInSeconds: Int = 3600
 
-  def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] = Future.successful(twitterAccountRepository.find(id))
+  def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] = Future.successful(TwitterAccount.find(id))
 
   def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
     Future.successful(Redirect(routes.ApplicationController.index))

@@ -8,10 +8,9 @@ Built with:
  - React.js
  - Twitter Bootstrap
  - play2-auth
- - play-slick
  - twitter4j
- - sbt-slick-codegen
  - flyway-sbt
+ - scalikejdbc
 
 ## How to run
 
