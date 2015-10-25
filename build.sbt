@@ -23,7 +23,6 @@ lazy val flyway = (project in file("flyway"))
 
 lazy val web = (project in file("web"))
   .enablePlugins(PlayScala)
-  .settings(slickCodegenSettings:_*)
   .settings(scalariformSettings:_*)
   .settings(scalikejdbcSettings:_*)
   .settings(
@@ -32,12 +31,13 @@ lazy val web = (project in file("web"))
     libraryDependencies ++= Seq(
       jdbc,
       ws,
+      cache,
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
-      "jp.t2v" %% "play2-auth"      % "0.13.2",
-      "jp.t2v" %% "play2-auth-test" % "0.13.2" % "test",
+      "jp.t2v" %% "play2-auth"      % "0.14.1",
+      "jp.t2v" %% "play2-auth-test" % "0.14.1" % "test",
       "org.twitter4j" % "twitter4j-core" % "4.0.3",
       "org.scalikejdbc" %% "scalikejdbc" % "2.2.9",
       "org.scalikejdbc" %% "scalikejdbc-config" % "2.2.9",
-      "org.scalikejdbc" %% "scalikejdbc-play-plugin" % "2.3.6"
+      "org.scalikejdbc" %% "scalikejdbc-play-initializer" % "2.4.2"
     )
 )
