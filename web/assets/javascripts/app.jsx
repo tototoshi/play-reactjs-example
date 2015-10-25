@@ -1,6 +1,6 @@
 require('../../../node_modules/bootstrap/dist/css/bootstrap.min.css');
 require('bootstrap');
-require('../stylesheets/app.css');
+require('../stylesheets/app.less');
 
 var React = require('react');
 var ReactDOM = require('react-dom');

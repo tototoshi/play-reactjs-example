@@ -11,6 +11,7 @@ module.exports = {
     devtool: 'inline-source-map',
     module: {
         loaders: [
+            { test: /\.less$/, loader: ExtractTextPlugin.extract("style-loader", "css-loader!less-loader") },
             { test: /\.css$/, loader: ExtractTextPlugin.extract("style-loader", "css-loader") },
             { test: /\.(ttf|eot|svg|woff2?)(\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: "url-loader" },
             { test: /\.jsx?$/, exclude: /(node_modules|bower_components)/, loader: 'babel' }
