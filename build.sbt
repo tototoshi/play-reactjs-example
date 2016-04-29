@@ -28,11 +28,13 @@ lazy val web = (project in file("web"))
   .settings(
     name := "web",
     scalaVersion := "2.11.8",
+    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     libraryDependencies ++= Seq(
       jdbc,
       ws,
       cache,
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
+      "com.github.tototoshi" %% "dbcache-postgresql" % "0.1.0-SNAPSHOT",
       "jp.t2v" %% "play2-auth"      % "0.14.1",
       "jp.t2v" %% "play2-auth-test" % "0.14.1" % "test",
       "org.twitter4j" % "twitter4j-core" % "4.0.3",
