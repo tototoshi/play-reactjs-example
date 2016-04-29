@@ -1,24 +1,27 @@
 package controllers
 
+import javax.inject.Inject
+
 import jp.t2v.lab.play2.auth.{ AuthElement, LoginLogout }
 import models._
-import play.api.Logger
-import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.oauth._
 import play.api.mvc._
+import play.api.{ Environment, Logger }
 
 import scala.concurrent.Future
 
-class ApplicationController extends Controller
+class ApplicationController @Inject() (
+  val environment: Environment,
+  val twitterAccountRepository: TwitterAccountRepository,
+  twitterConfig: TwitterConfig) extends Controller
     with LoginLogout
     with AuthConfigImpl
-    with AuthElement
-    with Twitter4jHelper {
+    with AuthElement {
 
-  val twitterConfig = new TwitterConfig
+  private val twitter4jFactory: Twitter4jFactory = new Twitter4jFactory(twitterConfig)
 
   def index = StackAction(AuthorityKey -> Normal) { implicit request =>
     Ok(views.html.index())
@@ -58,8 +61,8 @@ class ApplicationController extends Controller
             requestToken, verifier
           ).right.toOption
         } yield {
-          val tw = getTwitter4jInstance(twitterConfig, token.token, token.secret)
-          TwitterAccount.upsert(
+          val tw = twitter4jFactory.getTwitter4jInstance(token.token, token.secret)
+          twitterAccountRepository.upsert(
             tw.getId, tw.getScreenName, token.token, token.secret
           )
           gotoLoginSucceeded(tw.getId)

@@ -1,18 +1,14 @@
 package models
 
+import javax.inject.Inject
+
 import scalikejdbc._
 
 case class TwitterAccount(
-    id: Long,
-    screenName: String,
-    accessToken: String,
-    accessTokenSecret: String) {
-
-  def save()(implicit session: DBSession = TwitterAccount.autoSession): TwitterAccount = TwitterAccount.save(this)(session)
-
-  def destroy()(implicit session: DBSession = TwitterAccount.autoSession): Unit = TwitterAccount.destroy(this)(session)
-
-}
+  id: Long,
+  screenName: String,
+  accessToken: String,
+  accessTokenSecret: String)
 
 object TwitterAccount extends SQLSyntaxSupport[TwitterAccount] {
 
@@ -32,45 +28,17 @@ object TwitterAccount extends SQLSyntaxSupport[TwitterAccount] {
 
   val ta = TwitterAccount.syntax("ta")
 
-  override val autoSession = AutoSession
-
-  def find(id: Long)(implicit session: DBSession = autoSession): Option[TwitterAccount] = {
+  def find(id: Long)(implicit session: DBSession): Option[TwitterAccount] = {
     withSQL {
       select.from(TwitterAccount as ta).where.eq(ta.id, id)
     }.map(TwitterAccount(ta.resultName)).single.apply()
   }
 
-  def findAll()(implicit session: DBSession = autoSession): List[TwitterAccount] = {
-    withSQL(select.from(TwitterAccount as ta)).map(TwitterAccount(ta.resultName)).list.apply()
-  }
-
-  def countAll()(implicit session: DBSession = autoSession): Long = {
-    withSQL(select(sqls.count).from(TwitterAccount as ta)).map(rs => rs.long(1)).single.apply().get
-  }
-
-  def findBy(where: SQLSyntax)(implicit session: DBSession = autoSession): Option[TwitterAccount] = {
-    withSQL {
-      select.from(TwitterAccount as ta).where.append(where)
-    }.map(TwitterAccount(ta.resultName)).single.apply()
-  }
-
-  def findAllBy(where: SQLSyntax)(implicit session: DBSession = autoSession): List[TwitterAccount] = {
-    withSQL {
-      select.from(TwitterAccount as ta).where.append(where)
-    }.map(TwitterAccount(ta.resultName)).list.apply()
-  }
-
-  def countBy(where: SQLSyntax)(implicit session: DBSession = autoSession): Long = {
-    withSQL {
-      select(sqls.count).from(TwitterAccount as ta).where.append(where)
-    }.map(_.long(1)).single.apply().get
-  }
-
-  def create(
+  private def create(
     id: Long,
     screenName: String,
     accessToken: String,
-    accessTokenSecret: String)(implicit session: DBSession = autoSession): TwitterAccount = {
+    accessTokenSecret: String)(implicit session: DBSession): TwitterAccount = {
     withSQL {
       insert.into(TwitterAccount).columns(
         column.id,
@@ -92,27 +60,7 @@ object TwitterAccount extends SQLSyntaxSupport[TwitterAccount] {
       accessTokenSecret = accessTokenSecret)
   }
 
-  def batchInsert(entities: Seq[TwitterAccount])(implicit session: DBSession = autoSession): Seq[Int] = {
-    val params: Seq[Seq[(Symbol, Any)]] = entities.map(entity =>
-      Seq(
-        'id -> entity.id,
-        'screenName -> entity.screenName,
-        'accessToken -> entity.accessToken,
-        'accessTokenSecret -> entity.accessTokenSecret))
-    SQL("""insert into twitter_accounts(
-        id,
-        screen_name,
-        access_token,
-        access_token_secret
-      ) values (
-        {id},
-        {screenName},
-        {accessToken},
-        {accessTokenSecret}
-      )""").batchByName(params: _*).apply()
-  }
-
-  def save(entity: TwitterAccount)(implicit session: DBSession = autoSession): TwitterAccount = {
+  private def save(entity: TwitterAccount)(implicit session: DBSession): TwitterAccount = {
     withSQL {
       update(TwitterAccount).set(
         column.id -> entity.id,
@@ -128,7 +76,7 @@ object TwitterAccount extends SQLSyntaxSupport[TwitterAccount] {
     id: Long,
     screenName: String,
     accessToken: String,
-    accessTokenSecret: String)(implicit session: DBSession = autoSession): TwitterAccount = {
+    accessTokenSecret: String)(implicit session: DBSession): TwitterAccount = {
     find(id) match {
       case Some(_) =>
         save(TwitterAccount(id, screenName, accessToken, accessTokenSecret))
@@ -137,8 +85,20 @@ object TwitterAccount extends SQLSyntaxSupport[TwitterAccount] {
     }
   }
 
-  def destroy(entity: TwitterAccount)(implicit session: DBSession = autoSession): Unit = {
+  def destroy(entity: TwitterAccount)(implicit session: DBSession): Unit = {
     withSQL { delete.from(TwitterAccount).where.eq(column.id, entity.id) }.update.apply()
+  }
+
+}
+
+class TwitterAccountRepository @Inject() (connectionPool: ConnectionPool) {
+
+  implicit def session: DBSession = DBSession(conn = connectionPool.borrow())
+
+  def find(id: Long): Option[TwitterAccount] = TwitterAccount.find(id)(session)
+
+  def upsert(id: Long, screenName: String, accessToken: String, accessTokenSecret: String): TwitterAccount = {
+    TwitterAccount.upsert(id, screenName, accessToken, accessTokenSecret)(session)
   }
 
 }

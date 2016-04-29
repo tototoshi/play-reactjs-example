@@ -36,8 +36,7 @@ lazy val web = (project in file("web"))
       "jp.t2v" %% "play2-auth"      % "0.14.1",
       "jp.t2v" %% "play2-auth-test" % "0.14.1" % "test",
       "org.twitter4j" % "twitter4j-core" % "4.0.3",
-      "org.scalikejdbc" %% "scalikejdbc" % "2.2.9",
-      "org.scalikejdbc" %% "scalikejdbc-config" % "2.2.9",
-      "org.scalikejdbc" %% "scalikejdbc-play-initializer" % "2.4.2"
+      "org.scalikejdbc" %% "scalikejdbc" % "2.3.5",
+      "org.scalikejdbc" %% "scalikejdbc-config" % "2.3.5"
     )
 )
