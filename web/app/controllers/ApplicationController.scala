@@ -12,7 +12,7 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 
-object ApplicationController extends Controller
+class ApplicationController extends Controller
     with LoginLogout
     with AuthConfigImpl
     with AuthElement

@@ -3,16 +3,16 @@
 # ~~~~
 
 # Home page
-GET         /                    controllers.ApplicationController.index
-GET         /logout              controllers.ApplicationController.logout
+GET         /                    @controllers.ApplicationController.index
+GET         /logout              @controllers.ApplicationController.logout
 
-GET         /request             controllers.ApplicationController.request
-GET         /authorize           controllers.ApplicationController.authorize
+GET         /request             @controllers.ApplicationController.request
+GET         /authorize           @controllers.ApplicationController.authorize
 
-GET         /api/timeline        controllers.APIController.timeline(since_id: Option[Long])
-POST        /api/retweet         controllers.APIController.rt
-POST        /api/fav             controllers.APIController.fav
-POST        /api/tweet           controllers.APIController.tweet
+GET         /api/timeline        @controllers.APIController.timeline(since_id: Option[Long])
+POST        /api/retweet         @controllers.APIController.rt
+POST        /api/fav             @controllers.APIController.fav
+POST        /api/tweet           @controllers.APIController.tweet
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file                     controllers.Assets.at(path="/public", file)
+GET         /assets/*file        @controllers.Assets.at(path="/public", file)

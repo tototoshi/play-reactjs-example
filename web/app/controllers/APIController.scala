@@ -12,7 +12,7 @@ import twitter4j.{ Paging, Twitter, TwitterFactory }
 
 import scala.collection.JavaConverters._
 
-object APIController extends Controller with AuthConfigImpl with AuthElement with Twitter4jHelper {
+class APIController extends Controller with AuthConfigImpl with AuthElement with Twitter4jHelper {
 
   val twitterConfig = new TwitterConfig
 

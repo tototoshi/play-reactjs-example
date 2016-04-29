@@ -2,10 +2,10 @@ resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releas
 
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
-resolvers += "Flyway" at "http://flywaydb.org/repo"
+resolvers += "Flyway" at "https://flywaydb.org/repo"
 
 // The Play plugin
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.3")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.2")
 
 addSbtPlugin("org.flywaydb" % "flyway-sbt" % "3.2.1")
 

@@ -14,7 +14,7 @@ lazy val flyway = (project in file("flyway"))
   .settings(flywaySettings:_*)
   .settings(
   name := "flyway",
-  scalaVersion := "2.11.6",
+  scalaVersion := "2.11.8",
   flywayUrl := databaseUrl,
   flywayUser := databaseUser,
   flywayPassword := databasePassword,
@@ -27,7 +27,7 @@ lazy val web = (project in file("web"))
   .settings(scalikejdbcSettings:_*)
   .settings(
     name := "web",
-    scalaVersion := "2.11.6",
+    scalaVersion := "2.11.8",
     libraryDependencies ++= Seq(
       jdbc,
       ws,
