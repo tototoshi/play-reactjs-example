@@ -418,29 +418,33 @@ class Fav extends Component {
 
 Fav = connect()(Fav);
 
-var Status = React.createClass({
-    render: function() {
-        if (this.props.status.isRetweet) {
+class Status extends Component {
+    render() {
+        const status = this.props.status;
+
+        if (status.isRetweet) {
             return <div className="row">
-                <div className="col-md-1"><img src={this.props.status.user.profileImageURL}/></div>
+                <div className="col-md-1"><img src={status.user.profileImageURL}/></div>
                 <div className="col-md-11">
-                    <div>@{this.props.status.id}</div>
-                    <div>@{this.props.status.user.screenName}</div>
+                    <div>@{status.id}</div>
+                    <div>@{status.user.screenName}</div>
                     <div className="row well">
-                        <div className="col-md-1"><img src={this.props.status.retweetedStatus.user.profileImageURL}/></div>
+                        <div className="col-md-1">
+                            <img src={status.retweetedStatus.user.profileImageURL}/>
+                        </div>
                         <div className="col-md-11">
-                            <div>@{this.props.status.retweetedStatus.user.screenName}</div>
-                            <div>{this.props.status.retweetedStatus.text}</div>
-                            {this.props.status.retweetedStatus.photos.map(function (photo, i) {
+                            <div>@{status.retweetedStatus.user.screenName}</div>
+                            <div>{status.retweetedStatus.text}</div>
+                            {status.retweetedStatus.photos.map(function (photo, i) {
                                 return <img key={i} src={photo.url} className="media"/>;
                             })}
                             <hr />
                             <div className="row">
                                 <div className="col-md-1 col-xs-1">
-                                    <Rt status={this.props.status} />
+                                    <Rt status={status} />
                                 </div>
                                 <div className="col-md-1 col-xs-1">
-                                    <Fav status={this.props.status} />
+                                    <Fav status={status} />
                                 </div>
                             </div>
                         </div>
@@ -451,20 +455,20 @@ var Status = React.createClass({
         } else {
             return <div>
                 <div className="row">
-                    <div className="col-md-1"><img src={this.props.status.user.profileImageURL}/></div>
+                    <div className="col-md-1"><img src={status.user.profileImageURL}/></div>
                     <div className="col-md-11">
-                        <div>@{this.props.status.user.screenName}</div>
-                        <div>{this.props.status.text}</div>
-                        {this.props.status.photos.map(function (photo, i) {
+                        <div>@{status.user.screenName}</div>
+                        <div>{status.text}</div>
+                        {status.photos.map(function (photo, i) {
                             return <img key={i} className="media" src={photo.url}/>;
                         })}
                         <hr />
                         <div className="row">
                             <div className="rt col-md-1 col-xs-1">
-                                <Rt status={this.props.status} />
+                                <Rt status={status} />
                             </div>
                             <div className="col-md-1 col-xs-1">
-                                <Fav status={this.props.status} />
+                                <Fav status={status} />
                             </div>
                         </div>
                     </div>
@@ -473,7 +477,7 @@ var Status = React.createClass({
             </div>
         }
     }
-});
+};
 
 class Root extends Component {
     render() {
