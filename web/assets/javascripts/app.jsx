@@ -216,7 +216,7 @@ var Status = React.createClass({
                                 return <img src={photo.url} className="media"/>;
                             })}
                             <hr />
-                            <div class="row">
+                            <div className="row">
                                 <div className="col-md-1 col-xs-1">
                                     <Rt statusId={this.props.status.retweetedStatus.id}
                                         onRt={this.props.onRt}
@@ -244,7 +244,7 @@ var Status = React.createClass({
                             return <img className="media" src={photo.url}/>;
                         })}
                         <hr />
-                        <div class="row">
+                        <div className="row">
                             <div className="rt col-md-1 col-xs-1">
                                 <Rt statusId={this.props.status.id}
                                     onRt={this.props.onRt}
