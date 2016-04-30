@@ -288,11 +288,14 @@ class TweetBox extends Component {
     }
 
     render() {
-        var value = this.props.tweetText;
+        var text = this.props.tweetText;
         return <div>
-            <textarea className="form-control" rows="4" value={value} onChange={this.handleChange} ref="text" />
+            <textarea className="form-control" rows="4" value={text} onChange={this.handleChange} ref="text" />
             <br />
-            <button onClick={this.tweet} className="btn btn-primary">Tweet</button>
+            <div className="row">
+                <div className="col-md-1"><button onClick={this.tweet} className="btn btn-primary">Tweet</button></div>
+                <div className="col-md-1"><span>{text.length}</span></div>
+            </div>
         </div>;
     }
 
