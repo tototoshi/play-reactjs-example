@@ -21,6 +21,8 @@ const LIKE = 'LIKE';
 const RETWEET = 'RETWEET';
 const SHOW_NOTIFICATION = 'SHOW_NOTIFICATION';
 const HIDE_NOTIFICATION = 'HIDE_NOTIFICATION';
+const SHOW_ERROR_MESSAGE = 'SHOW_ERROR_MESSAGE';
+const CLEAR_ERROR_MESSAGE = 'CLEAR_ERROR_MESSAGE';
 
 // Action Creator
 function receiveStatuses(statuses) {
@@ -70,8 +72,16 @@ function postLike(statusId) {
         };
 
         fetch('/api/fav', options)
-            .then(response => dispatch(like(statusId)))
-            .then(() => dispatch(showAndHideNotification('Like!')))
+            .then(response => {
+                if (!response.ok) {
+                    return response.json()
+                        .then(json => dispatch(showErrorMessage(json.message)));
+                } else {
+                    dispatch(like(statusId));
+                    dispatch(showAndHideNotification('Like!'));
+                    dispatch(clearErrorMessage());
+                }
+            })
     };
 }
 
@@ -87,8 +97,16 @@ function postRetweet(statusId) {
         };
 
         fetch('/api/retweet', options)
-            .then(response => dispatch(like(statusId)))
-            .then(() => dispatch(showAndHideNotification('Retweet!')))
+            .then(response => {
+                if (!response.ok) {
+                    return response.json()
+                        .then(json => dispatch(showErrorMessage(json.message)));
+                } else {
+                    dispatch(like(statusId));
+                    dispatch(showAndHideNotification('Retweet!'));
+                    dispatch(clearErrorMessage())
+                }
+            })
     };
 }
 
@@ -101,8 +119,17 @@ function updateStatuses(since_id) {
 
     return dispatch => {
         fetch(url, { credentials: 'include' })
-            .then(response => response.json())
-            .then(json => dispatch(receiveStatuses(json)))
+            .then(response => {
+                if (!response.ok) {
+                    return response.json()
+                        .then(json => dispatch(showErrorMessage(json.message)))
+                } else {
+                    return response.json()
+                        .then(json => dispatch(receiveStatuses(json)))
+                        .then(() => dispatch(clearErrorMessage()));
+                }
+            })
+
     }
 }
 
@@ -118,8 +145,18 @@ function postTweet(text, sinceId) {
         };
 
         fetch('/api/tweet', options)
-            .then(response => dispatch(updateStatuses(sinceId)))
-            .then(() => dispatch(tweetText('')))
+            .then(response => {
+                if (!response.ok) {
+                    response.json()
+                        .then(json => dispatch(showErrorMessage(json.message)));
+
+                } else {
+                    dispatch(showAndHideNotification('Tweet!'));
+                    dispatch(tweetText(''));
+                    dispatch(updateStatuses(sinceId));
+                    dispatch(clearErrorMessage());
+                }
+            })
     }
 }
 
@@ -140,6 +177,19 @@ function showAndHideNotification(message) {
     return (dispatch) => {
         dispatch(showNotification(message));
         setTimeout(() => dispatch(hideNotification()), 3000);
+    }
+}
+
+function showErrorMessage(message) {
+    return {
+        type: SHOW_ERROR_MESSAGE,
+        message: message
+    }
+}
+
+function clearErrorMessage() {
+    return {
+        type: CLEAR_ERROR_MESSAGE
     }
 }
 
@@ -164,6 +214,10 @@ const statusesReducer = (state = [], action) => {
 
 const errorMessageReducer = (state = '', action) => {
     switch (action.type) {
+        case SHOW_ERROR_MESSAGE:
+            return action.message;
+        case CLEAR_ERROR_MESSAGE:
+            return '';
         default:
             return state;
     }

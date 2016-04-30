@@ -5,12 +5,12 @@ import javax.inject.Inject
 import jp.t2v.lab.play2.auth.AuthElement
 import models.JsonFormats._
 import models._
-import play.api.Environment
+import play.api.{ Environment, Logger }
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json.Json
 import play.api.mvc._
-import twitter4j.Paging
+import twitter4j.{ Paging, Twitter, TwitterException }
 
 import scala.collection.JavaConverters._
 
@@ -21,20 +21,35 @@ class APIController @Inject() (
     with AuthConfigImpl
     with AuthElement {
 
+  private val logger = Logger(classOf[APIController])
+
   private val twitter4jFactory: Twitter4jFactory = new Twitter4jFactory(twitterConfig)
+
+  private def withTwitter(account: User)(f: Twitter => Result): Result = {
+    val tw = twitter4jFactory.getTwitter4jInstance(account)
+    try {
+      f(tw)
+    } catch {
+      case e: TwitterException =>
+        logger.error(e.getMessage, e)
+        InternalServerError(Json.toJson(Map("message" -> e.getMessage)))
+    }
+  }
 
   def timeline(sinceId: Option[Long]) = StackAction(AuthorityKey -> Normal) { implicit request =>
     val account = loggedIn
-    val tw = twitter4jFactory.getTwitter4jInstance(account)
-    val statuses = sinceId.map { sid =>
-      tw.getHomeTimeline(new Paging(sid))
-    } getOrElse {
-      tw.getHomeTimeline
+
+    withTwitter(account) { tw =>
+      val statuses = sinceId.map { sid =>
+        tw.getHomeTimeline(new Paging(sid))
+      } getOrElse {
+        tw.getHomeTimeline
+      }
+      Ok(Json.toJson(
+        statuses.asScala.map { t =>
+          convertTwitter4JStatusToTweetStatus(t)
+        }))
     }
-    Ok(Json.toJson(
-      statuses.asScala.map { t =>
-        convertTwitter4JStatusToTweetStatus(t)
-      }))
   }
 
   val rtForm = Form(
@@ -47,9 +62,10 @@ class APIController @Inject() (
       formWithError => BadRequest
     }, {
       case RtForm(id) =>
-        val tw = twitter4jFactory.getTwitter4jInstance(account)
-        tw.retweetStatus(id)
-        Ok
+        withTwitter(account) { tw =>
+          tw.retweetStatus(id)
+          Ok
+        }
     })
   }
 
@@ -63,9 +79,10 @@ class APIController @Inject() (
       formWithError => BadRequest
     }, {
       case FavForm(id) =>
-        val tw = twitter4jFactory.getTwitter4jInstance(account)
-        tw.createFavorite(id)
-        Ok
+        withTwitter(account) { tw =>
+          tw.createFavorite(id)
+          Ok
+        }
     })
   }
 
@@ -79,9 +96,10 @@ class APIController @Inject() (
       formWithError => BadRequest
     }, {
       case TweetForm(tweetText) =>
-        val tw = twitter4jFactory.getTwitter4jInstance(account)
-        tw.updateStatus(tweetText)
-        Ok
+        withTwitter(account) { tw =>
+          tw.updateStatus(tweetText)
+          Ok
+        }
     })
   }
 
