@@ -5,209 +5,361 @@ require('../stylesheets/app.less');
 require('es6-promise').polyfill();
 require('isomorphic-fetch');
 
-var React = require('react');
-var ReactDOM = require('react-dom');
-var ReactCSSTransitionGroup = require('react-addons-css-transition-group');
+import React, { Component, PropTypes } from 'react'
+import ReactDOM from 'react-dom'
+import { createStore, applyMiddleware, combineReducers } from 'redux'
+import { connect } from 'react-redux'
+import thunkMiddleware from 'redux-thunk'
+import { Provider } from 'react-redux'
 
-var App = React.createClass({
-    getInitialState: function() {
-        return {
-            notification: '',
-            errorMessage: '',
-            statuses: []
-        }
-    },
-    componentDidMount: function() {
-        fetch('/api/timeline', {
-            credentials: 'include'
-        }).then(function (response) {
-            if (response.status >= 400) {
-                throw new Error("Bad request")
-            }
-            return response.json();
-        }).then(function (json) {
-            this.setState({ statuses: json });
-            // auto reload
-            var updateInterval = 120 * 1000;
-            setTimeout(function () {
-                this.updateTimeline();
-            }.bind(this), updateInterval)
-        }.bind(this)).catch(function () {
-            this.setState({ errorMessage: 'Network Error' });
-        }.bind(this));
-    },
-    updateTimeline: function() {
-        fetch('/api/timeline' + '?since_id=' + encodeURIComponent(this.state.statuses[0].id), {
-            credentials: 'include'
-        }).then(function (response) {
-            if (response.status >= 400) {
-                throw new Error("Bad request")
-            }
-            return response.json();
-        }).then(function (json) {
-            this.setState({ statuses: json.concat(this.state.statuses) });
-        }.bind(this)).catch(function () {
-            this.setState({ errorMessage: 'Network Error' });
-        }.bind(this));
-    },
-    handleTweet: function() {
-        this.notify('Tweet!')
-    },
-    handleFav: function () {
-        this.notify('Fav!')
-    },
-    handleRt: function () {
-        this.notify('Retweet!');
-    },
-    notify: function (message) {
-        if (this.notifyTimer) {
-            clearTimeout(this.notifyTimer);
-        }
-        this.setState({notification: message});
-        this.notifyTimer = setTimeout(function() {
-            this.setState({notification: ''})
-        }.bind(this), 3000);
-    },
-    render: function() {
-        var statuses = this.state.statuses.map(function(status) {
-            return <Status onFav={this.handleFav} onRt={this.handleRt} status={status}/>;
+
+// Actions
+const RECEIVE_STATUSES = 'RECEIVE_STATUSES';
+const TWEET = 'TWEET';
+const TWEET_TEXT = 'TWEET_TEXT';
+const LIKE = 'LIKE';
+const RETWEET = 'RETWEET';
+const SHOW_NOTIFICATION = 'SHOW_NOTIFICATION';
+const HIDE_NOTIFICATION = 'HIDE_NOTIFICATION';
+
+// Action Creator
+function receiveStatuses(statuses) {
+    return {
+        type: RECEIVE_STATUSES,
+        statuses: statuses
+    };
+}
+
+function tweetText(text) {
+    return {
+        type: TWEET_TEXT,
+        text: text
+    }
+}
+
+function tweet(text) {
+    return {
+        type: TWEET,
+        text: text
+    };
+}
+
+function retweet(statusId) {
+    return {
+        type: RETWEET,
+        statusId: statusId
+    };
+}
+
+function like(statusId) {
+    return {
+        type: LIKE,
+        text: statusId
+    }
+}
+
+function postLike(statusId) {
+    return (dispatch) => {
+        const formData = new FormData();
+        formData.append('id', statusId);
+
+        const options = {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        };
+
+        fetch('/api/fav', options)
+            .then(response => dispatch(like(statusId)))
+            .then(() => dispatch(showAndHideNotification('Like!')))
+    };
+}
+
+function postRetweet(statusId) {
+    return (dispatch) => {
+        const formData = new FormData();
+        formData.append('id', statusId);
+
+        const options = {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        };
+
+        fetch('/api/retweet', options)
+            .then(response => dispatch(like(statusId)))
+            .then(() => dispatch(showAndHideNotification('Retweet!')))
+    };
+}
+
+function updateStatuses(since_id) {
+    var url = '/api/timeline';
+    if (since_id) {
+        url += '?since_id=';
+        url += encodeURIComponent(since_id);
+    }
+
+    return dispatch => {
+        fetch(url, { credentials: 'include' })
+            .then(response => response.json())
+            .then(json => dispatch(receiveStatuses(json)))
+    }
+}
+
+function postTweet(text, sinceId) {
+    return (dispatch) => {
+        const formData = new FormData();
+        formData.append('text', text);
+
+        const options = {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        };
+
+        fetch('/api/tweet', options)
+            .then(response => dispatch(updateStatuses(sinceId)))
+            .then(() => dispatch(tweetText('')))
+    }
+}
+
+function showNotification(message) {
+    return {
+        type: SHOW_NOTIFICATION,
+        message: message
+    };
+}
+
+function hideNotification() {
+    return {
+        type: HIDE_NOTIFICATION
+    }
+}
+
+function showAndHideNotification(message) {
+    return (dispatch) => {
+        dispatch(showNotification(message));
+        setTimeout(() => dispatch(hideNotification()), 3000);
+    }
+}
+
+// Reducers
+const tweetTextReducer = (state = '', action) => {
+    switch (action.type) {
+        case TWEET_TEXT:
+            return action.text;
+        default:
+            return state
+    }
+};
+
+const statusesReducer = (state = [], action) => {
+    switch (action.type) {
+        case RECEIVE_STATUSES:
+            return action.statuses.concat(state);
+        default:
+            return state;
+    }
+};
+
+const errorMessageReducer = (state = '', action) => {
+    switch (action.type) {
+        default:
+            return state;
+    }
+};
+
+const notificationReducer = (state = '', action) => {
+    switch (action.type) {
+        case SHOW_NOTIFICATION:
+            return action.message;
+        case HIDE_NOTIFICATION:
+            return '';
+        default:
+            return state;
+    }
+};
+
+// Store
+const reducer = combineReducers({
+    tweetText: tweetTextReducer,
+    notification: notificationReducer,
+    statuses: statusesReducer,
+    errorMessage: errorMessageReducer
+});
+const initialState = {
+    tweetText: '',
+    notification: '',
+    statuses: [],
+    errorMessage: ''
+};
+const store = createStore(reducer, initialState, applyMiddleware(thunkMiddleware));
+
+class App extends Component {
+
+    constructor(props) {
+        super(props);
+        this.updateTimeline = this.updateTimeline.bind(this);
+    }
+
+    componentDidMount() {
+        this.props.dispatch(updateStatuses());
+        setInterval(() => this.updateTimeline(), 120 * 1000)
+    }
+
+    updateTimeline() {
+        this.props.dispatch(updateStatuses(this.props.sinceId));
+    }
+
+    render() {
+        var statuses = this.props.statuses.map(function(status) {
+            return <Status key={status.id} status={status}/>;
         }.bind(this));
 
         var errorMessage = null;
-        if (this.state.errorMessage.length > 0) {
-            errorMessage = <div className="alert alert-danger">{this.state.errorMessage}</div>
+        if (this.props.errorMessage.length > 0) {
+            errorMessage = <div className="alert alert-danger">{this.props.errorMessage}</div>
         }
         return <div>
             <div className="row">
                 <div className="col-md-12">
-                    <TweetBox onTweet={this.handleTweet}/>
+                    <TweetBox />
                     <hr />
                 </div>
             </div>
             {errorMessage}
             {statuses}
-            <ReactCSSTransitionGroup transitionName="notification">
-                <Notification message={this.state.notification}/>
-            </ReactCSSTransitionGroup>
+            <Notification />
         </div>;
     }
-});
+}
 
-var Notification = React.createClass({
-    render: function () {
-        if (this.props.message.length !== 0) {
+App = connect((state) => {
+    var sinceId = null;
+    if (state.statuses.length > 0) {
+        sinceId = state.statuses[0].id
+    }
+    return {
+        sinceId: sinceId,
+        statuses: state.statuses,
+        errorMessage: state.errorMessage
+    }
+})(App);
+
+class Notification extends Component {
+
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        const message = this.props.notification;
+        if (message.length > 0) {
             return <div className="row">
-                <div className="col-md-3 pull-right notify alert alert-info">
-                    {this.props.message}
-                </div>
+                <div className="col-md-3 pull-right notify alert alert-info">{message}</div>
             </div>;
         } else {
             return <div></div>;
         }
     }
-});
+}
 
-var TweetBox = React.createClass({
-    getInitialState: function () {
-        return { value: ''　};
-    },
-    tweet: function () {
-        var that = this;
-        var text = React.findDOMNode(this.refs.text).value.trim();
-        var formData = new FormData();
-        formData.append('text', text);
-        fetch('/api/tweet', {
-            method: 'POST',
-            credentials: 'include',
-            body: formData
-        }).then(function (response) {
-            if (response.status >= 400) {
-                throw new Error("Bad request")
-            }
-            return response.json();
-        }).then(function (json) {
-            that.props.onTweet();
-            that.setState({value: ''});
-        }).catch(function () {
-            alert('Failed to tweet');
-        });
-    },
-    handleChange: function (event) {
-        this.setState({value: event.target.value.substr(0, 140)});
-    },
-    render: function() {
-        var value = this.state.value;
+Notification = connect((state) => {
+    return {
+        notification: state.notification
+    }
+})(Notification);
+
+class TweetBox extends Component {
+
+    constructor(props) {
+        super(props);
+        this.handleChange = this.handleChange.bind(this);
+        this.tweet = this.tweet.bind(this);
+    }
+
+    tweet() {
+        var text = ReactDOM.findDOMNode(this.refs.text).value.trim();
+        this.props.dispatch(postTweet(text, this.props.sinceId));
+    }
+
+    handleChange (event) {
+        this.props.dispatch(tweetText(event.target.value.substr(0, 140)));
+    }
+
+    render() {
+        var value = this.props.tweetText;
         return <div>
             <textarea className="form-control" rows="4" value={value} onChange={this.handleChange} ref="text" />
             <br />
             <button onClick={this.tweet} className="btn btn-primary">Tweet</button>
         </div>;
     }
-});
 
-var Rt = React.createClass({
-    getInitialState: function () {
-        return { alreadyRetweeted: this.props.alreadyRetweeted };
-    },
-    handleClick: function (e) {
+}
+
+TweetBox = connect((state) => {
+    var sinceId = null;
+    if (state.statuses.length > 0) {
+        sinceId = state.statuses[0].id
+    }
+    return {
+        sinceId: sinceId,
+        tweetText: state.tweetText
+    }
+})(TweetBox);
+
+class Rt extends Component {
+
+    constructor(props) {
+        super(props);
+        this.handleClick = this.handleClick.bind(this);
+    }
+
+    handleClick(e) {
         e.preventDefault();
-        var formData = new FormData();
-        formData.append('id', this.props.statusId);
-        fetch('/api/retweet', {
-            method: 'POST',
-            credentials: 'include',
-            body: formData
-        }).then(function (response) {
-            if (response.status >= 400) {
-                throw new Error("Bad request")
-            }
-            this.props.onRt();
-            this.setState({ alreadyRetweeted: true })
-        }.bind(this)).catch(function () {
-            alert('Oops!');
-        });
-    },
-    render: function() {
-        if (this.state.alreadyRetweeted) {
+        const status = this.props.status;
+        this.props.dispatch(postRetweet(status.id));
+        return false;
+    }
+
+    render() {
+        const status = this.props.status;
+        if (status.alreadyRetweeted) {
             return <span>RT</span>;
         } else {
             return <a href="#" onClick={this.handleClick}>RT</a>;
         }
     }
-});
+}
 
-var Fav = React.createClass({
-    getInitialState: function () {
-        return { alreadyFavorited: this.props.alreadyFavorited };
-    },
-    handleClick: function (e) {
+Rt = connect()(Rt);
+
+class Fav extends Component {
+
+    constructor(props) {
+        super(props);
+        this.handleClick = this.handleClick.bind(this);
+    }
+
+    handleClick(e) {
         e.preventDefault();
-        var formData = new FormData();
-        formData.append('id', this.props.statusId);
-        fetch('/api/fav', {
-            method: 'POST',
-            credentials: 'include',
-            body: formData
-        }).then(function (response) {
-            if (response.status >= 400) {
-                console.log(response.statusText);
-                throw new Error("Bad request")
-            }
-            this.props.onFav();
-            this.setState({ alreadyFavorited: true })
-        }.bind(this)).catch(function () {
-            alert('Oops!');
-        });
+        const status = this.props.status;
+        this.props.dispatch(postLike(status.id));
         return false;
-    },
-    render: function() {
-        if (this.state.alreadyFavorited) {
+    }
+
+    render() {
+        const status = this.props.status;
+        if (status.alreadyFavorited) {
             return <span>Fav</span>;
         } else {
             return <a href="#" onClick={this.handleClick}>Fav</a>;
         }
     }
-});
+}
+
+Fav = connect()(Fav);
 
 var Status = React.createClass({
     render: function() {
@@ -222,20 +374,16 @@ var Status = React.createClass({
                         <div className="col-md-11">
                             <div>@{this.props.status.retweetedStatus.user.screenName}</div>
                             <div>{this.props.status.retweetedStatus.text}</div>
-                            {this.props.status.retweetedStatus.photos.map(function (photo) {
-                                return <img src={photo.url} className="media"/>;
+                            {this.props.status.retweetedStatus.photos.map(function (photo, i) {
+                                return <img key={i} src={photo.url} className="media"/>;
                             })}
                             <hr />
                             <div className="row">
                                 <div className="col-md-1 col-xs-1">
-                                    <Rt statusId={this.props.status.retweetedStatus.id}
-                                        onRt={this.props.onRt}
-                                        alreadyRetweeted={this.props.status.isRetweetedByMe} />
+                                    <Rt status={this.props.status} />
                                 </div>
                                 <div className="col-md-1 col-xs-1">
-                                    <Fav statusId={this.props.status.retweetedStatus.id}
-                                         onFav={this.props.onFav}
-                                         alreadyFavorited={this.props.status.isFavoritedByMe} />
+                                    <Fav status={this.props.status} />
                                 </div>
                             </div>
                         </div>
@@ -250,20 +398,16 @@ var Status = React.createClass({
                     <div className="col-md-11">
                         <div>@{this.props.status.user.screenName}</div>
                         <div>{this.props.status.text}</div>
-                        {this.props.status.photos.map(function (photo) {
-                            return <img className="media" src={photo.url}/>;
+                        {this.props.status.photos.map(function (photo, i) {
+                            return <img key={i} className="media" src={photo.url}/>;
                         })}
                         <hr />
                         <div className="row">
                             <div className="rt col-md-1 col-xs-1">
-                                <Rt statusId={this.props.status.id}
-                                    onRt={this.props.onRt}
-                                    alreadyRetweeted={this.props.status.isRetweetedByMe} />
+                                <Rt status={this.props.status} />
                             </div>
                             <div className="col-md-1 col-xs-1">
-                                <Fav statusId={this.props.status.id}
-                                     onFav={this.props.onFav}
-                                     alreadyFavorited={this.props.status.isFavoritedByMe} />
+                                <Fav status={this.props.status} />
                             </div>
                         </div>
                     </div>
@@ -274,4 +418,14 @@ var Status = React.createClass({
     }
 });
 
-ReactDOM.render(<App />, document.getElementById("application"));
+class Root extends Component {
+    render() {
+        return (
+            <Provider store={store}>
+                <App />
+            </Provider>
+        )
+    }
+}
+
+ReactDOM.render(<Root />, document.getElementById("application"));

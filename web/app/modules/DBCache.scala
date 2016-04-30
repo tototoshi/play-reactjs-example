@@ -23,7 +23,6 @@ class DBCacheApi(cache: DBCache) extends CacheApi {
   }
 
   def get[A](key: String)(implicit ct: ClassTag[A]): Option[A] = {
-    logger.info(s"$key -> " + cache.get[A](key).toString)
     cache.get[A](key)
   }
   def getOrElse[A: ClassTag](key: String, expiration: Duration)(orElse: => A) =
