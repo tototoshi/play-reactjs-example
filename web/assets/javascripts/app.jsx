@@ -419,18 +419,28 @@ class Fav extends Component {
 Fav = connect()(Fav);
 
 class Status extends Component {
+
+    static getTwitterProfileURL(screenName) {
+        return 'https://twitter.com/' + screenName;
+    }
+
     render() {
         const status = this.props.status;
-
         if (status.isRetweet) {
             return <div className="row">
-                <div className="col-md-1"><img src={status.user.profileImageURL}/></div>
+                <div className="col-md-1">
+                    <a href={Status.getTwitterProfileURL(status.user.screenName)} target="_blank">
+                        <img src={status.user.profileImageURL}/>
+                    </a>
+                </div>
                 <div className="col-md-11">
                     <div>@{status.id}</div>
                     <div>@{status.user.screenName}</div>
                     <div className="row well">
                         <div className="col-md-1">
-                            <img src={status.retweetedStatus.user.profileImageURL}/>
+                            <a href={Status.getTwitterProfileURL(status.retweetedStatus.user.screenName)} target="_blank">
+                                <img src={status.retweetedStatus.user.profileImageURL}/>
+                            </a>
                         </div>
                         <div className="col-md-11">
                             <div>@{status.retweetedStatus.user.screenName}</div>
@@ -455,7 +465,11 @@ class Status extends Component {
         } else {
             return <div>
                 <div className="row">
-                    <div className="col-md-1"><img src={status.user.profileImageURL}/></div>
+                    <div className="col-md-1">
+                        <a href={Status.getTwitterProfileURL(status.user.screenName)} target="_blank">
+                            <img src={status.user.profileImageURL}/>
+                        </a>
+                    </div>
                     <div className="col-md-11">
                         <div>@{status.user.screenName}</div>
                         <div>{status.text}</div>
