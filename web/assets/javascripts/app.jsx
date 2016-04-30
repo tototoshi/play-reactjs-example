@@ -2,6 +2,9 @@ require('../../../node_modules/bootstrap/dist/css/bootstrap.min.css');
 require('bootstrap');
 require('../stylesheets/app.less');
 
+require('es6-promise').polyfill();
+require('isomorphic-fetch');
+
 var React = require('react');
 var ReactDOM = require('react-dom');
 var ReactCSSTransitionGroup = require('react-addons-css-transition-group');
@@ -15,37 +18,37 @@ var App = React.createClass({
         }
     },
     componentDidMount: function() {
-        $.ajax({
-            type: 'GET',
-            url: '/api/timeline',
-            success: function (result) {
-                this.setState({ statuses: result});
-
-                console.log(result);
-                // auto reload
-                var updateInterval = 120 * 1000;
-                setTimeout(function () {
-                    this.updateTimeline();
-                }.bind(this), updateInterval)
-
-            }.bind(this),
-            error: function() {
-                this.setState({ errorMessage: 'Network Error' });
-            }.bind(this)
-        });
+        fetch('/api/timeline', {
+            credentials: 'include'
+        }).then(function (response) {
+            if (response.status >= 400) {
+                throw new Error("Bad request")
+            }
+            return response.json();
+        }).then(function (json) {
+            this.setState({ statuses: json });
+            // auto reload
+            var updateInterval = 120 * 1000;
+            setTimeout(function () {
+                this.updateTimeline();
+            }.bind(this), updateInterval)
+        }.bind(this)).catch(function () {
+            this.setState({ errorMessage: 'Network Error' });
+        }.bind(this));
     },
     updateTimeline: function() {
-        $.ajax({
-            type: 'GET',
-            url: '/api/timeline',
-            data: { since_id: this.state.statuses[0].id },
-            success: function (result) {
-                this.setState({ statuses: result.concat(this.state.statuses) });
-            }.bind(this),
-            error: function() {
-                this.setState({ errorMessage: 'Network Error' });
-            }.bind(this)
-        });
+        fetch('/api/timeline' + '?since_id=' + encodeURIComponent(this.state.statuses[0].id), {
+            credentials: 'include'
+        }).then(function (response) {
+            if (response.status >= 400) {
+                throw new Error("Bad request")
+            }
+            return response.json();
+        }).then(function (json) {
+            this.setState({ statuses: json.concat(this.state.statuses) });
+        }.bind(this)).catch(function () {
+            this.setState({ errorMessage: 'Network Error' });
+        }.bind(this));
     },
     handleTweet: function() {
         this.notify('Tweet!')
@@ -111,17 +114,22 @@ var TweetBox = React.createClass({
     tweet: function () {
         var that = this;
         var text = React.findDOMNode(this.refs.text).value.trim();
-        $.ajax({
-            type: 'POST',
-            url: '/api/tweet',
-            data: { text: text },
-            success: function (result) {
-                that.props.onTweet();
-                that.setState({value: ''});
-            },
-            error: function() {
-                alert('Failed to tweet');
+        var formData = new FormData();
+        formData.append('text', text);
+        fetch('/api/tweet', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        }).then(function (response) {
+            if (response.status >= 400) {
+                throw new Error("Bad request")
             }
+            return response.json();
+        }).then(function (json) {
+            that.props.onTweet();
+            that.setState({value: ''});
+        }).catch(function () {
+            alert('Failed to tweet');
         });
     },
     handleChange: function (event) {
@@ -143,19 +151,20 @@ var Rt = React.createClass({
     },
     handleClick: function (e) {
         e.preventDefault();
-        $.ajax({
-            type: 'POST',
-            url: '/api/retweet',
-            data: {
-                id: this.props.statusId
-            },
-            success: function () {
-                this.props.onRt();
-                this.setState({ alreadyRetweeted: true })
-            }.bind(this),
-            error: function() {
-                alert('Oops!');
+        var formData = new FormData();
+        formData.append('id', this.props.statusId);
+        fetch('/api/retweet', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        }).then(function (response) {
+            if (response.status >= 400) {
+                throw new Error("Bad request")
             }
+            this.props.onRt();
+            this.setState({ alreadyRetweeted: true })
+        }.bind(this)).catch(function () {
+            alert('Oops!');
         });
     },
     render: function() {
@@ -173,20 +182,21 @@ var Fav = React.createClass({
     },
     handleClick: function (e) {
         e.preventDefault();
-        console.log(this.props.statusId);
-        $.ajax({
-            type: 'POST',
-            url: '/api/fav',
-            data: {
-                id: this.props.statusId
-            },
-            success: function () {
-                this.props.onFav();
-                this.setState({ alreadyFavorited: true })
-            }.bind(this),
-            error: function() {
-                alert('Oops!')
+        var formData = new FormData();
+        formData.append('id', this.props.statusId);
+        fetch('/api/fav', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        }).then(function (response) {
+            if (response.status >= 400) {
+                console.log(response.statusText);
+                throw new Error("Bad request")
             }
+            this.props.onFav();
+            this.setState({ alreadyFavorited: true })
+        }.bind(this)).catch(function () {
+            alert('Oops!');
         });
         return false;
     },
