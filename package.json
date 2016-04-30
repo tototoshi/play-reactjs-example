@@ -18,6 +18,7 @@
     "less": "^2.5.3",
     "less-loader": "^2.2.1",
     "node-libs-browser": "^0.5.2",
+    "redux-devtools": "^3.2.0",
     "style-loader": "^0.13.0",
     "url-loader": "^0.5.6",
     "webpack": "^1.9.11",
@@ -28,6 +29,8 @@
     "jquery": "^2.1.4",
     "react": "^0.14.0",
     "react-addons-css-transition-group": "^0.14.0",
-    "react-dom": "^0.14.0"
+    "react-dom": "^0.14.0",
+    "react-redux": "^4.4.5",
+    "redux": "^3.5.2"
   }
 }
